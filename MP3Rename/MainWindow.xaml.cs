@@ -26,37 +26,18 @@ namespace MP3Rename
             InitializeComponent();
         }
 
-        private List<TagLib.File> tagFiles;
+
 
         private void ClickedBrowse(object sender, RoutedEventArgs e)
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
             DialogResult result = fbd.ShowDialog();
             grid.ItemsSource = null;
-            tagFiles = new List<TagLib.File>();
 
             if (result == System.Windows.Forms.DialogResult.OK)
             {
                 string[] files = Directory.GetFiles(fbd.SelectedPath).Where(f => new[] { ".mp3", ".wma" }.Contains(System.IO.Path.GetExtension(f).ToLower())).ToArray();
-
-                List<string> errors = new List<string>();
-                foreach (var path in files)
-                {
-                    try
-                    {
-                        TagLib.File f = TagLib.File.Create(path);
-                        tagFiles.Add(f);
-
-                    }
-                    catch (Exception ex)
-                    {
-                        errors.Add(System.IO.Path.GetFileName(path));
-                    }
-                }
-                if (errors.Any())
-                {
-                    System.Windows.MessageBox.Show("Corrupt files detected (These will not be loaded, manual entry required):\n\n" + string.Join("\n", errors), "Corrupt files in folder", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
+                var tagFiles = LoadTagFiles(files);
 
 
                 var editInfos = tagFiles.Select(s => new EditInfo
@@ -81,6 +62,29 @@ namespace MP3Rename
             }
         }
 
+        private List<TagLib.File> LoadTagFiles(string[] files)
+        {
+            List<TagLib.File> tagFiles = new List<TagLib.File>();
+            List<string> errors = new List<string>();
+            foreach (var path in files)
+            {
+                try
+                {
+                    TagLib.File f = TagLib.File.Create(path);
+                    tagFiles.Add(f);
+                }
+                catch (Exception ex)
+                {
+                    errors.Add(System.IO.Path.GetFileName(path));
+                }
+            }
+            if (errors.Any())
+            {
+                System.Windows.MessageBox.Show("Corrupt files detected (These will not be loaded, manual entry required):\n\n" + string.Join("\n", errors), "Corrupt files in folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            return tagFiles;
+        }
+
         private void ClickedSave(object sender, RoutedEventArgs e)
         {
             var items = (List<EditInfo>)grid.ItemsSource;
@@ -91,39 +95,40 @@ namespace MP3Rename
                 targetDirectory = directory + "\\NamedFiles";
                 if (Directory.Exists(targetDirectory))
                 {
-                    Directory.Delete(targetDirectory,true);
+                    Directory.Delete(targetDirectory, true);
                 }
                 Directory.CreateDirectory(targetDirectory);
             }
 
             foreach (var item in items)
             {
-                item.File.Tag.Album = item.Album;
-                item.File.Tag.Title = item.Title;
-                AddArtists(item);
-                if (item.Track.HasValue)
-                {
-                    item.File.Tag.Track = item.Track.Value;
-                }
-                if (item.Year.HasValue)
-                {
-                    item.File.Tag.Year = item.Year.Value;
-                }
-                if (!string.IsNullOrWhiteSpace(item.Genre))
-                {
-                    item.File.Tag.Genres = new string[1] { item.Genre };
-                }
-                item.File.Save();
-
-
+                UpdateTags(item);
                 if (!string.IsNullOrWhiteSpace(item.Title) && item.Track.HasValue)
                 {
                     File.Copy(item.File.Name, targetDirectory + "\\" + item.Track.Value.ToString() + " " + item.Title + System.IO.Path.GetExtension(item.File.Name));
                 }
-
-
             }
             System.Windows.MessageBox.Show("Saved metadata for media files", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void UpdateTags(EditInfo item)
+        {
+            item.File.Tag.Album = item.Album;
+            item.File.Tag.Title = item.Title;
+            AddArtists(item);
+            if (item.Track.HasValue)
+            {
+                item.File.Tag.Track = item.Track.Value;
+            }
+            if (item.Year.HasValue)
+            {
+                item.File.Tag.Year = item.Year.Value;
+            }
+            if (!string.IsNullOrWhiteSpace(item.Genre))
+            {
+                item.File.Tag.Genres = new string[1] { item.Genre };
+            }
+            item.File.Save();
         }
 
         private void AddArtists(EditInfo item)
