@@ -10,10 +10,13 @@
         </Grid.RowDefinitions>
         <DataGrid x:Name="grid" AutoGenerateColumns="false" AlternatingRowBackground="LightBlue" CanUserAddRows="False" CanUserDeleteRows="False">
             <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding FileName, Mode=TwoWay}" IsReadOnly="True" Header="FileName"/>
                 <DataGridTextColumn Binding="{Binding Artist, Mode=TwoWay}" IsReadOnly="False" Header="Artist"/>
+                <DataGridTextColumn Binding="{Binding CoArtist, Mode=TwoWay}" IsReadOnly="False" Header="Co-Artist"/>
                 <DataGridTextColumn Binding="{Binding Title, Mode=TwoWay}" IsReadOnly="False" Header="Title"/>
                 <DataGridTextColumn Binding="{Binding Track, Mode=TwoWay}" IsReadOnly="False" Header="Track"/>
                 <DataGridTextColumn Binding="{Binding Album, Mode=TwoWay}" IsReadOnly="False" Header="Album"/>
+                <DataGridTextColumn Binding="{Binding Genre, Mode=TwoWay}" IsReadOnly="False" Header="Genre"/>
                 <DataGridTextColumn Binding="{Binding Year, Mode=TwoWay}" IsReadOnly="False" Header="Year"/>
             </DataGrid.Columns>
         </DataGrid>
